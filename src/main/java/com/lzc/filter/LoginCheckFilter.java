@@ -6,6 +6,7 @@ package com.lzc.filter;
  */
 
 import com.alibaba.fastjson.JSON;
+import com.lzc.common.BaseContext;
 import com.lzc.common.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.AntPathMatcher;
@@ -58,7 +59,11 @@ public class LoginCheckFilter implements Filter {
         //4.判断登录状态，如果已登录，则直接放行
         if (request.getSession().getAttribute("employee") != null) {
             log.info("用户已登录，用户id为：{}",request.getSession().getAttribute("employee"));
+            Long empId = (Long) request.getSession().getAttribute("employee");
+            BaseContext.setCurrentId(empId);
             filterChain.doFilter(request, response);
+            long id = Thread.currentThread().getId();
+            log.info("线程id为{}",id);
             return;
         }
         log.info("用户未登录");
