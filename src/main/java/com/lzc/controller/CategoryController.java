@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author luozouchen
@@ -73,6 +74,7 @@ public class CategoryController {
 
     /**
      * 根据id删除
+     *
      * @param id
      * @return
      */
@@ -82,5 +84,20 @@ public class CategoryController {
         //categoryService.removeById(id);
         categoryService.remove(id);
         return R.success("删除成功");
+    }
+
+    /**
+     * 根据条件查询分类数据
+     *
+     * @param category
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<Category>> list(Category category) {
+        LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(category.getType() != null, Category::getType, category.getType());
+        queryWrapper.orderByAsc(Category::getSort).orderByDesc(Category::getUpdateTime);
+        List<Category> list = categoryService.list(queryWrapper);
+        return R.success(list);
     }
 }
