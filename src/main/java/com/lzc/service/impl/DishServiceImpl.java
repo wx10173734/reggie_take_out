@@ -2,13 +2,16 @@ package com.lzc.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lzc.common.CustomException;
 import com.lzc.common.R;
 import com.lzc.dto.DishDto;
 import com.lzc.entity.Dish;
 import com.lzc.entity.DishFlavor;
+import com.lzc.entity.SetmealDish;
 import com.lzc.mapper.DishMapper;
 import com.lzc.service.DishFlavorService;
 import com.lzc.service.DishService;
+import com.lzc.service.SetmealDishService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,8 @@ import java.util.stream.Collectors;
 public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements DishService {
     @Autowired
     private DishFlavorService dishFlavorService;
+    @Autowired
+    private SetmealDishService setmealDishService;
 
     /**
      * 新增菜品，同时保存对应的口味数据
@@ -90,5 +95,17 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             return item;
         }).collect(Collectors.toList());
         dishFlavorService.saveBatch(flavors);
+    }
+
+    @Override
+    public void removeWithSetmeal(List<Long> ids) {
+        LambdaQueryWrapper<SetmealDish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SetmealDish::getDishId,ids);
+        //queryWrapper.eq(Dish::getStatus,1);
+        int count = setmealDishService.count(queryWrapper);
+        if (count>0){
+            throw new CustomException("菜品绑定了套餐，不能删除");
+        }
+        this.removeByIds(ids);
     }
 }

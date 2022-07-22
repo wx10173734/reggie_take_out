@@ -133,4 +133,11 @@ public class DishController {
         List<Dish> list = dishService.list(queryWrapper);
         return R.success(list);
     }
+
+    @DeleteMapping
+    public R<String> delete(@RequestParam List<Long> ids){
+        log.info("菜品管理要删除的ids:{}",ids);
+        dishService.removeWithSetmeal(ids);
+        return R.success("删除成功");
+    }
 }
