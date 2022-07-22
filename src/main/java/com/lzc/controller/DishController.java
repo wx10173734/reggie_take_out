@@ -53,6 +53,7 @@ public class DishController {
 
     /**
      * 分页查询菜品
+     *
      * @param page
      * @param pageSize
      * @param dish
@@ -75,7 +76,7 @@ public class DishController {
             BeanUtils.copyProperties(item, dishDto);
             Long categoryId = item.getCategoryId();//分类Id
             Category category = categoryService.getById(categoryId);
-            if (category!=null){
+            if (category != null) {
                 String categoryName = category.getName();
                 dishDto.setCategoryName(categoryName);
             }
@@ -87,28 +88,49 @@ public class DishController {
 
     /**
      * 根据id查询菜品信息和口味信息
+     *
      * @param id
      * @return
      */
     @GetMapping("/{id}")
-    public R<DishDto> get(@PathVariable Long id){
+    public R<DishDto> get(@PathVariable Long id) {
         DishDto dish = dishService.getByIdWithFlavor(id);
-        if (dish!=null){
+        if (dish != null) {
             return R.success(dish);
-        }else {
+        } else {
             return R.error("没有找到该对象");
         }
     }
 
     /**
      * 更新菜品信息
+     *
      * @param dishDto
      * @return
      */
     @PutMapping
-    public R<DishDto> update(@RequestBody DishDto dishDto){
+    public R<DishDto> update(@RequestBody DishDto dishDto) {
         log.info(dishDto.toString());
         dishService.updateWithFlavor(dishDto);
         return R.success(dishDto);
+    }
+
+    /**
+     * 根据条件查询对应的菜品数据
+     *
+     * @param dish
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<Dish>> list(Dish dish) {
+        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
+        //添加排序条件
+        queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+        //查询状态为1（起售状态的菜品）
+        queryWrapper.eq(Dish::getStatus, 1);
+        queryWrapper.like(StringUtils.isNotEmpty(dish.getName()), Dish::getName, dish.getName());
+        List<Dish> list = dishService.list(queryWrapper);
+        return R.success(list);
     }
 }
