@@ -52,6 +52,7 @@ public class SetmealController {
 
     /**
      * 分页查询
+     *
      * @param page
      * @param pageSize
      * @param name
@@ -91,36 +92,56 @@ public class SetmealController {
 
     /**
      * 删除套餐
+     *
      * @param ids
      * @return
      */
     @DeleteMapping
-    public R<String> delete(@RequestParam List<Long> ids){
-        log.info("ids:{}",ids);
+    public R<String> delete(@RequestParam List<Long> ids) {
+        log.info("ids:{}", ids);
         setmealService.removeWithDish(ids);
         return R.success("套餐数据删除成功");
     }
 
     /**
      * 根据Id获取套餐信息
+     *
      * @param id
      * @return
      */
     @GetMapping("/{id}")
-    public R<SetmealDto> get(@PathVariable Long id){
+    public R<SetmealDto> get(@PathVariable Long id) {
         SetmealDto setmealDto = setmealService.getByIdWithSetmalDish(id);
-        if (setmealDto!=null){
+        if (setmealDto != null) {
             return R.success(setmealDto);
-        }else {
+        } else {
             return R.error("没有找到该对象");
         }
     }
+
     /**
      * 更新套餐信息，同时更新菜品信息
      */
     @PutMapping
-    public R<SetmealDto> update(@RequestBody SetmealDto setmealDto){
+    public R<SetmealDto> update(@RequestBody SetmealDto setmealDto) {
         setmealService.updateWithSetmalDish(setmealDto);
         return R.success(setmealDto);
+    }
+
+    /**
+     * 根据条件查询套餐数据
+     *
+     * @param setmeal
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<Setmeal>> list(Setmeal setmeal) {
+        log.info(setmeal.toString());
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(setmeal.getCategoryId() != null, Setmeal::getCategoryId, setmeal.getCategoryId());
+        queryWrapper.eq(setmeal.getStatus() != null, Setmeal::getStatus, setmeal.getStatus());
+        queryWrapper.orderByDesc(Setmeal::getUpdateTime);
+        List<Setmeal> list = setmealService.list(queryWrapper);
+        return R.success(list);
     }
 }

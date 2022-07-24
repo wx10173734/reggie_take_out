@@ -45,8 +45,9 @@ public class UserController {
             //生成随机4位验证码
             //生成随机的4位验证码
             String code = ValidateCodeUtils.generateValidateCode(4).toString();
+            log.info(code);
             //调用腾讯云提供的短信服务api完成发送短信
-            SendSms.sendMessage(phone,code);
+            //SendSms.sendMessage(phone,code);
             //需要将生成的验证码保存到session
             session.setAttribute(phone,code);
             return R.success("验证码发送成功");

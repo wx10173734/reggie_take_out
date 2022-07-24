@@ -6,6 +6,7 @@ import com.lzc.common.R;
 import com.lzc.dto.DishDto;
 import com.lzc.entity.Category;
 import com.lzc.entity.Dish;
+import com.lzc.entity.DishFlavor;
 import com.lzc.service.CategoryService;
 import com.lzc.service.DishFlavorService;
 import com.lzc.service.DishService;
@@ -114,6 +115,24 @@ public class DishController {
         dishService.updateWithFlavor(dishDto);
         return R.success(dishDto);
     }
+    /**
+     * 根据条件查询对应的菜品数据
+     *
+     * @param dish
+     * @return
+     */
+    //@GetMapping("/list")
+    //public R<List<Dish>> list(Dish dish) {
+    //    LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+    //    queryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
+    //    //添加排序条件
+    //    queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+    //    //查询状态为1（起售状态的菜品）
+    //    queryWrapper.eq(Dish::getStatus, 1);
+    //    queryWrapper.like(StringUtils.isNotEmpty(dish.getName()), Dish::getName, dish.getName());
+    //    List<Dish> list = dishService.list(queryWrapper);
+    //    return R.success(list);
+    //}
 
     /**
      * 根据条件查询对应的菜品数据
@@ -122,7 +141,7 @@ public class DishController {
      * @return
      */
     @GetMapping("/list")
-    public R<List<Dish>> list(Dish dish) {
+    public R<List<DishDto>> list(Dish dish) {
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
         //添加排序条件
@@ -131,12 +150,30 @@ public class DishController {
         queryWrapper.eq(Dish::getStatus, 1);
         queryWrapper.like(StringUtils.isNotEmpty(dish.getName()), Dish::getName, dish.getName());
         List<Dish> list = dishService.list(queryWrapper);
-        return R.success(list);
+        List<DishDto> dishDtoList = list.stream().map((item) -> {
+            DishDto dishDto = new DishDto();
+            BeanUtils.copyProperties(item, dishDto);
+            Long categoryId = item.getCategoryId();//分类Id
+            Category category = categoryService.getById(categoryId);
+            if (category != null) {
+                String categoryName = category.getName();
+                dishDto.setCategoryName(categoryName);
+            }
+            //当前菜品id
+            Long dishId = item.getId();
+            LambdaQueryWrapper<DishFlavor> dishFlavorLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            dishFlavorLambdaQueryWrapper.eq(DishFlavor::getDishId, dishId);
+            //sql:select * from dish_flavor where dish_id =?
+            List<DishFlavor> dishFlavorList = dishFlavorService.list(dishFlavorLambdaQueryWrapper);
+            dishDto.setFlavors(dishFlavorList);
+            return dishDto;
+        }).collect(Collectors.toList());
+        return R.success(dishDtoList);
     }
 
     @DeleteMapping
-    public R<String> delete(@RequestParam List<Long> ids){
-        log.info("菜品管理要删除的ids:{}",ids);
+    public R<String> delete(@RequestParam List<Long> ids) {
+        log.info("菜品管理要删除的ids:{}", ids);
         dishService.removeWithSetmeal(ids);
         return R.success("删除成功");
     }
